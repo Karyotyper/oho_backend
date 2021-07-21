@@ -139,7 +139,6 @@ class user_simpleton(db.Model):
 
 
 class user_simpleton_schema(Schema):
-    id = fields.Int(required=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
     phone = fields.Int(required=True)
