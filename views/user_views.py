@@ -31,7 +31,7 @@ def send_email(otp, receiver):
         s.login("ohopilot2020@gmail.com", "qpastxumemivtgib")
 
         # message to be sent
-        msg = MIMEText('One Time Password is: ' + str(otp))
+        msg = MIMEText('Here is your One Time Password: ' + str(otp))
         msg['Subject'] = 'Oho OTP Verification'
         msg['From'] = "ohopilot2020@gmail.com"
         msg['To'] = receiver
@@ -112,9 +112,16 @@ def create():
         return custom_response("User Already Exists", 500)
 
 
-# @user_api.route('/getbyId', methods=['POST'])
-# def getUserbyId():
-#     user_id = request.get_json()["user_id"]
+@user_api.route('/id', methods=['GET'])
+def getUserbyId():
+    try:
+        user_id = request.get_json()["user_id"]
+
+        user = user_simpleton.get_one_user(user_id)
+
+        return jsonify(user.to_json())
+    except Exception as err:
+        custom_response(err, 500)
 
 
 @user_api.route('/update', methods=['POST'])
@@ -125,11 +132,6 @@ def update():
     req_data = request.get_json()
     app.logger.info('even -------------- #' + json.dumps(req_data))
 
-    # try:
-    #     data = user_schema.load(req_data)
-    #     print(data)
-    # except ValidationError as err:
-    #     return custom_response(err, 400)
     data = req_data
     print((data))
 
@@ -153,40 +155,53 @@ def update():
 
 @user_api.route('/prompt/update', methods=['POST'])
 def prompt_update():
-    rdata = request.get_json()
-    user_id = rdata.get("user_id")
+    try:
+        rdata = request.get_json()
+        user_id = rdata.get("user_id")
 
-    if user_simpleton.get_one_user(user_id).prompts is not None:
-        for item in range(0, len(rdata["prompts"])):
-            prompt_id = rdata["prompts"][item].get("prompt_id")
-            name = rdata["prompts"][item].get("name")
-            user_id = rdata["prompts"][item].get("user_id")
+        if user_simpleton.get_one_user(user_id).prompts is not None:
+            for item in range(0, len(rdata["prompts"])):
+                prompt_id = rdata["prompts"][item].get("prompt_id")
+                name = rdata["prompts"][item].get("name")
+                user_id = rdata["prompts"][item].get("user_id")
 
-            pm = prompt(name, user_id)
-            updated_pm = pm.update(rdata, name, user_id, item, prompt_id)
+                pm = prompt(name, user_id)
+                updated_pm = pm.update(rdata, name, user_id, item, prompt_id)
+    except Exception as err:
+        custom_response(err, 500)
+
+    return "Prompt updated successfully"
 
 
 @user_api.route('/prompt/add', methods=['POST'])
 def prompt_add():
-    rdata = request.get_json()
-    for item in range(0, len(rdata["prompts"])):
-        name = rdata["prompts"][item].get("name")
-        user_id = rdata["prompts"][item].get("user_id")
+    try:
+        rdata = request.get_json()
+        for item in range(0, len(rdata["prompts"])):
+            name = rdata["prompts"][item].get("name")
+            user_id = rdata["prompts"][item].get("user_id")
 
-        pm = prompt(name, user_id)
-        user = user_simpleton.get_one_user(rdata["prompts"][item].get("user_id"))
-        user.prompts.append(pm)
+            pm = prompt(name, user_id)
+            user = user_simpleton.get_one_user(rdata["prompts"][item].get("user_id"))
+            user.prompts.append(pm)
 
-        db.session.add(user)
-        db.session.add(pm)
-        db.session.commit()
+            db.session.add(user)
+            db.session.add(pm)
+            db.session.commit()
+    except Exception as err:
+        return custom_response(err, 500)
+
+    return "Prompt saved successfully"
 
 
 @user_api.route('/prompts', methods=['GET'])
 def get_prompts():
-    user_id = request.get_json()["user_id"]
-    all_prompts = prompt.get_prompts_by_user(user_id)
-    return json.dumps([o.dump_prompt() for o in all_prompts])
+    try:
+        user_id = request.get_json()["user_id"]
+        all_prompts = prompt.get_prompts_by_user(user_id)
+        return json.dumps([o.dump_prompt() for o in all_prompts])
+    except Exception as err:
+        custom_response(err, 500)
 
 @user_api.route('/validateOTP', methods=['POST'])
 def validateOTP():

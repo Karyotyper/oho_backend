@@ -68,8 +68,6 @@ class user_simpleton(db.Model):
         # self.prompts = data.prompts
 
     def save(self):
-        if self.prompts is not None:
-            self.prompts.append()
         db.session.add(self)
         db.session.commit()
 
